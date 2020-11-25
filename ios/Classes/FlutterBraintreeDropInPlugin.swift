@@ -34,6 +34,9 @@ public class FlutterBraintreeDropInPlugin: BaseFlutterBraintreePlugin, FlutterPl
             
             let dropInRequest = BTDropInRequest()
             
+            dropInRequest.shouldMaskSecurityCode = true
+            dropInRequest.cardholderNameSetting = BTFormFieldSetting.required
+            
             if let amount = string(for: "amount", in: call) {
                 let threeDSecureRequest = BTThreeDSecureRequest()
                 threeDSecureRequest.threeDSecureRequestDelegate = self

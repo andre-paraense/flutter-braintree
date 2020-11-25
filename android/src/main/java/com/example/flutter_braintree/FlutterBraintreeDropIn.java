@@ -21,6 +21,7 @@ import com.braintreepayments.api.models.GooglePaymentRequest;
 import com.braintreepayments.api.models.PayPalRequest;
 import com.braintreepayments.api.models.PaymentMethodNonce;
 
+import com.braintreepayments.cardform.view.CardForm;
 import com.google.android.gms.wallet.TransactionInfo;
 import com.google.android.gms.wallet.WalletConstants;
 
@@ -79,10 +80,11 @@ public class FlutterBraintreeDropIn implements FlutterPlugin, ActivityAware, Met
       String clientToken = call.argument("clientToken");
       String tokenizationKey = call.argument("tokenizationKey");
       DropInRequest dropInRequest = new DropInRequest()
-              .amount((String) call.argument("amount"))
               .collectDeviceData((Boolean) call.argument("collectDeviceData"))
               .requestThreeDSecureVerification((Boolean) call.argument("requestThreeDSecureVerification"))
               .maskCardNumber((Boolean) call.argument("maskCardNumber"))
+              .cardholderNameStatus(CardForm.FIELD_REQUIRED)
+              .maskSecurityCode((Boolean) call.argument("maskSecurityCode"))
               .vaultManager((Boolean) call.argument("vaultManagerEnabled"));
 
       if (clientToken != null)

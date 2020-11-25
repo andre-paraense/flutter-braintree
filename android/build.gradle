@@ -16,13 +16,20 @@ rootProject.allprojects {
     repositories {
         google()
         jcenter()
+        maven {
+            url "https://cardinalcommerce.bintray.com/android"
+            credentials {
+                username 'braintree-team-sdk@cardinalcommerce'
+                password '220cc9476025679c4e5c843666c27d97cfb0f951'
+            }
+        }
     }
 }
 
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         minSdkVersion 21
@@ -34,7 +41,7 @@ android {
 }
 
 dependencies {
-    implementation 'com.braintreepayments.api:drop-in:4.1.1'
+    implementation 'com.braintreepayments.api:drop-in:4.6.0'
     implementation 'com.google.android.gms:play-services-wallet:16.0.1'
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
