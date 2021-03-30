@@ -11,7 +11,6 @@ import io.flutter.plugin.common.PluginRegistry.ActivityResultListener;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 
 import com.braintreepayments.api.dropin.DropInActivity;
