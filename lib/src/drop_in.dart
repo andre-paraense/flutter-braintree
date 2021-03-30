@@ -19,7 +19,6 @@ class BraintreeDropIn {
   /// all the relevant information, or `null` if the selection was canceled.
   static Future<BraintreeDropInResult> start(
       BraintreeDropInRequest request) async {
-    assert(request != null);
     var result = await _kChannel.invokeMethod(
       'start',
       request.toJson(),

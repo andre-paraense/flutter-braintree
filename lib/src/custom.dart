@@ -19,8 +19,6 @@ class Braintree {
     String authorization,
     BraintreeCreditCardRequest request,
   ) async {
-    assert(authorization != null);
-    assert(request != null);
     final result = await _kChannel.invokeMethod('tokenizeCreditCard', {
       'authorization': authorization,
       'request': request.toJson(),
@@ -39,8 +37,6 @@ class Braintree {
     String authorization,
     BraintreePayPalRequest request,
   ) async {
-    assert(authorization != null);
-    assert(request != null);
     final result = await _kChannel.invokeMethod('requestPaypalNonce', {
       'authorization': authorization,
       'request': request.toJson(),
