@@ -19,7 +19,7 @@
     <string name="bt_other">Outro</string>
     <string name="bt_select_payment_method">Selecionar meio de pagamento</string>
     <string name="bt_add_card">Adicionar e pagar</string>
-    <string name="bt_next">Seguinte</string>
+    <string name="bt_next">Próximo</string>
     <string name="bt_confirm">Confirmar</string>
     <string name="bt_scan_with_card_io">Digitalizar com card.io</string>
     <string name="bt_sms_code">Código SMS</string>
@@ -38,8 +38,8 @@
     <string name="bt_delete">Apagar</string>
     <string name="bt_cancel">Cancelar</string>
     <string name="bt_vault_manager_title">Edição salva</string>
-    <string name="bt_delete_confirmation_title">Eliminar meio de pagamento?</string>
-    <string name="bt_delete_confirmation_description">Já não poderá usar este meio de pagamento nesta aplicação.</string>
+    <string name="bt_delete_confirmation_title">Apagar meio de pagamento?</string>
+    <string name="bt_delete_confirmation_description">Você não poderá mais usar este meio de pagamento.</string>
     <string name="bt_done">Concluído</string>
     <string name="bt_vault_manager_delete_failure">Neste momento, não foi possível apagar o seu meio de pagamento, tente novamente mais tarde.</string>
 </resources>

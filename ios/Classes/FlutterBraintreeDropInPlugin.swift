@@ -55,16 +55,20 @@ public class FlutterBraintreeDropInPlugin: BaseFlutterBraintreePlugin, FlutterPl
             }
             
             if let paypalInfo = dict(for: "paypalRequest", in: call) {
-                guard let amount = paypalInfo["amount"] as? String else {
-                                    result(FlutterError(code: "braintree_error", message: "No Amount found for payment request", details: nil))
-                                    return
-                                };
+                let amount = paypalInfo["amount"] as? String;
 
-                let paypalRequest = BTPayPalCheckoutRequest(amount: amount);
-                paypalRequest.currencyCode = paypalInfo["currencyCode"] as? String;
-                paypalRequest.displayName = paypalInfo["displayName"] as? String;
-                paypalRequest.billingAgreementDescription = paypalInfo["billingAgreementDescription"] as? String;
-                dropInRequest.payPalRequest = paypalRequest
+                if(amount != nil){
+                    let paypalRequest = BTPayPalCheckoutRequest(amount: amount!);
+                    paypalRequest.currencyCode = paypalInfo["currencyCode"] as? String;
+                    paypalRequest.displayName = paypalInfo["displayName"] as? String;
+                    paypalRequest.billingAgreementDescription = paypalInfo["billingAgreementDescription"] as? String;
+                    dropInRequest.payPalRequest = paypalRequest
+                }else{
+                    let paypalRequest = BTPayPalVaultRequest();
+                    paypalRequest.displayName = paypalInfo["displayName"] as? String;
+                    paypalRequest.billingAgreementDescription = paypalInfo["billingAgreementDescription"] as? String;
+                    dropInRequest.payPalRequest = paypalRequest
+                }
             } else {
                 dropInRequest.paypalDisabled = true
             }
