@@ -127,8 +127,8 @@ public class FlutterBraintreeDropIn  implements FlutterPlugin, ActivityAware, Me
       dropInRequest.setVaultManagerEnabled((Boolean) call.argument("vaultManagerEnabled"));
       dropInRequest.setThreeDSecureRequest(threeDSecureRequest);
       dropInRequest.setMaskCardNumber((Boolean) call.argument("maskCardNumber"));
-      dropInRequest.cardholderNameStatus(CardForm.FIELD_REQUIRED);
-      dropInRequest.maskSecurityCode((Boolean) call.argument("maskSecurityCode"));
+      dropInRequest.setCardholderNameStatus(CardForm.FIELD_REQUIRED);
+      dropInRequest.setMaskSecurityCode((Boolean) call.argument("maskSecurityCode"));
 
 
       //.collectDeviceData((Boolean) call.argument("collectDeviceData"))
