@@ -1,1 +1,0 @@
-/Users/andre/Projetos/flutter-braintree/example/build/app/intermediates/cxx/Debug/5l1f6a4f/obj/x86_64
