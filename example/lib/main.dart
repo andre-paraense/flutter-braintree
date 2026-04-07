@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_braintree/flutter_braintree.dart';
 
@@ -64,23 +65,29 @@ class _MyAppState extends State<MyApp> {
                     postalCode: "12345",
                     countryCodeAlpha2: "US",
                   ),
-                  googlePaymentRequest: BraintreeGooglePaymentRequest(
-                    totalPrice: '4.20',
-                    currencyCode: 'USD',
-                    billingAddressRequired: false,
-                  ),
-                  applePayRequest: BraintreeApplePayRequest(
-                      currencyCode: 'USD',
-                      supportedNetworks: [
-                        ApplePaySupportedNetworks.visa,
-                        ApplePaySupportedNetworks.masterCard,
-                        // ApplePaySupportedNetworks.amex,
-                        // ApplePaySupportedNetworks.discover,
-                      ],
-                      countryCode: 'US',
-                      merchantIdentifier: '',
-                      displayName: '',
-                      paymentSummaryItems: []),
+                  // Google Pay and Apple Pay are only available on mobile.
+                  // On web, the Drop-in JS SDK handles available payment
+                  // methods automatically.
+                  googlePaymentRequest: kIsWeb
+                      ? null
+                      : BraintreeGooglePaymentRequest(
+                          totalPrice: '4.20',
+                          currencyCode: 'USD',
+                          billingAddressRequired: false,
+                        ),
+                  applePayRequest: kIsWeb
+                      ? null
+                      : BraintreeApplePayRequest(
+                          currencyCode: 'USD',
+                          supportedNetworks: [
+                            ApplePaySupportedNetworks.visa,
+                            ApplePaySupportedNetworks.masterCard,
+                          ],
+                          countryCode: 'US',
+                          merchantIdentifier: '',
+                          displayName: '',
+                          paymentSummaryItems: [],
+                        ),
                   paypalRequest: BraintreePayPalRequest(
                     amount: '4.20',
                     displayName: 'Example company',
@@ -92,7 +99,7 @@ class _MyAppState extends State<MyApp> {
                   showNonce(result.paymentMethodNonce);
                 }
               },
-              child: Text('LAUNCH NATIVE DROP-IN'),
+              child: Text('LAUNCH DROP-IN'),
             ),
             ElevatedButton(
               onPressed: () async {
