@@ -1,12 +1,13 @@
-import 'package:flutter/services.dart';
+import 'platform/braintree_platform_provider.dart';
 
 import 'request.dart';
 import 'result.dart';
 
+/// Provides custom Braintree payment tokenization functionality.
+///
+/// Supports credit card tokenization and PayPal payment nonce requests
+/// across Android, iOS, and Web platforms.
 class Braintree {
-  static const MethodChannel _kChannel =
-      const MethodChannel('flutter_braintree.custom');
-
   const Braintree._();
 
   /// Tokenizes a credit card.
@@ -19,12 +20,8 @@ class Braintree {
     String authorization,
     BraintreeCreditCardRequest request,
   ) async {
-    final result = await _kChannel.invokeMethod('tokenizeCreditCard', {
-      'authorization': authorization,
-      'request': request.toJson(),
-    });
-    if (result == null) return null;
-    return BraintreePaymentMethodNonce.fromJson(result);
+    return BraintreePlatformProvider.instance
+        .tokenizeCreditCard(authorization, request);
   }
 
   /// Requests a PayPal payment method nonce.
@@ -38,11 +35,7 @@ class Braintree {
     String authorization,
     BraintreePayPalRequest request,
   ) async {
-    final result = await _kChannel.invokeMethod('requestPaypalNonce', {
-      'authorization': authorization,
-      'request': request.toJson(),
-    });
-    if (result == null) return null;
-    return BraintreePaymentMethodNonce.fromJson(result);
+    return BraintreePlatformProvider.instance
+        .requestPaypalNonce(authorization, request);
   }
 }

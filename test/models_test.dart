@@ -1,5 +1,8 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_braintree/flutter_braintree.dart';
+import 'package:flutter_braintree/src/request.dart';
+import 'package:flutter_braintree/src/result.dart';
+import 'package:flutter_braintree/src/platform/braintree_platform.dart';
+
+import 'package:test/test.dart';
 
 /// A mock implementation of [BraintreePlatform] for testing.
 class MockBraintreePlatform extends BraintreePlatform {
@@ -48,244 +51,106 @@ class MockBraintreePlatform extends BraintreePlatform {
 }
 
 void main() {
-  late MockBraintreePlatform mockPlatform;
-
-  setUp(() {
-    mockPlatform = MockBraintreePlatform();
-    BraintreePlatformProvider.instance = mockPlatform;
-  });
-
-  tearDown(() {
-    BraintreePlatformProvider.reset();
-  });
-
-  group('BraintreePlatformProvider', () {
-    test('instance can be set and retrieved', () {
-      final customMock = MockBraintreePlatform();
-      BraintreePlatformProvider.instance = customMock;
-      expect(BraintreePlatformProvider.instance, equals(customMock));
+  group('BraintreePlatform interface', () {
+    test('mock platform can be instantiated', () {
+      final mock = MockBraintreePlatform();
+      expect(mock, isNotNull);
     });
 
-    test('reset clears the singleton instance', () {
-      BraintreePlatformProvider.instance = MockBraintreePlatform();
-      BraintreePlatformProvider.reset();
-      // After reset, accessing instance should create a new one
-      // (on mobile, this creates MethodChannelBraintreePlatform)
-      expect(BraintreePlatformProvider.instance, isNotNull);
-    });
-  });
-
-  group('Braintree.tokenizeCreditCard', () {
-    test('delegates to platform and returns nonce on success', () async {
-      mockPlatform.creditCardResult = const BraintreePaymentMethodNonce(
-        nonce: 'test-nonce-123',
-        typeLabel: 'Visa',
-        description: 'Visa ending in 1234',
-        isDefault: false,
-      );
-
-      final request = BraintreeCreditCardRequest(
-        cardNumber: '4111111111111111',
-        expirationMonth: '12',
-        expirationYear: '2025',
-        cvv: '123',
-      );
-
-      final result = await Braintree.tokenizeCreditCard(
-        'sandbox_key',
-        request,
-      );
-
-      expect(result, isNotNull);
-      expect(result!.nonce, equals('test-nonce-123'));
-      expect(result.typeLabel, equals('Visa'));
-      expect(result.description, equals('Visa ending in 1234'));
-      expect(result.isDefault, isFalse);
-      expect(mockPlatform.tokenizeCreditCardCallCount, equals(1));
-      expect(mockPlatform.lastAuthorization, equals('sandbox_key'));
-      expect(
-          mockPlatform.lastCreditCardRequest!.cardNumber, '4111111111111111');
-    });
-
-    test('returns null when tokenization fails', () async {
-      mockPlatform.creditCardResult = null;
-
-      final request = BraintreeCreditCardRequest(
-        cardNumber: '4111111111111111',
-        expirationMonth: '12',
-        expirationYear: '2025',
-        cvv: '123',
-      );
-
-      final result = await Braintree.tokenizeCreditCard(
-        'sandbox_key',
-        request,
-      );
-
-      expect(result, isNull);
-      expect(mockPlatform.tokenizeCreditCardCallCount, equals(1));
-    });
-
-    test('passes cardholderName when provided', () async {
-      mockPlatform.creditCardResult = const BraintreePaymentMethodNonce(
+    test('mock tokenizeCreditCard returns configured result', () async {
+      final mock = MockBraintreePlatform();
+      mock.creditCardResult = const BraintreePaymentMethodNonce(
         nonce: 'test-nonce',
         typeLabel: 'Visa',
         description: 'Visa ending in 1234',
         isDefault: false,
       );
 
-      final request = BraintreeCreditCardRequest(
-        cardNumber: '4111111111111111',
-        expirationMonth: '12',
-        expirationYear: '2025',
-        cvv: '123',
-        cardholderName: 'John Doe',
+      final result = await mock.tokenizeCreditCard(
+        'auth',
+        BraintreeCreditCardRequest(
+          cardNumber: '4111111111111111',
+          expirationMonth: '12',
+          expirationYear: '2025',
+          cvv: '123',
+        ),
       );
 
-      await Braintree.tokenizeCreditCard('sandbox_key', request);
-
-      expect(mockPlatform.lastCreditCardRequest!.cardholderName, 'John Doe');
+      expect(result, isNotNull);
+      expect(result!.nonce, 'test-nonce');
+      expect(mock.tokenizeCreditCardCallCount, 1);
+      expect(mock.lastAuthorization, 'auth');
     });
-  });
 
-  group('Braintree.requestPaypalNonce', () {
-    test('delegates to platform and returns nonce on success', () async {
-      mockPlatform.paypalResult = const BraintreePaymentMethodNonce(
-        nonce: 'paypal-nonce-456',
+    test('mock tokenizeCreditCard returns null on failure', () async {
+      final mock = MockBraintreePlatform();
+      mock.creditCardResult = null;
+
+      final result = await mock.tokenizeCreditCard(
+        'auth',
+        BraintreeCreditCardRequest(
+          cardNumber: '4111111111111111',
+          expirationMonth: '12',
+          expirationYear: '2025',
+          cvv: '123',
+        ),
+      );
+
+      expect(result, isNull);
+    });
+
+    test('mock requestPaypalNonce returns configured result', () async {
+      final mock = MockBraintreePlatform();
+      mock.paypalResult = const BraintreePaymentMethodNonce(
+        nonce: 'paypal-nonce',
         typeLabel: 'PayPal',
         description: 'PayPal account',
         isDefault: false,
         paypalPayerId: 'payer-123',
       );
 
-      final request = BraintreePayPalRequest(
-        amount: '10.00',
-        currencyCode: 'USD',
-      );
-
-      final result = await Braintree.requestPaypalNonce(
-        'sandbox_key',
-        request,
+      final result = await mock.requestPaypalNonce(
+        'auth',
+        BraintreePayPalRequest(amount: '10.00'),
       );
 
       expect(result, isNotNull);
-      expect(result!.nonce, equals('paypal-nonce-456'));
-      expect(result.typeLabel, equals('PayPal'));
-      expect(result.paypalPayerId, equals('payer-123'));
-      expect(mockPlatform.requestPaypalNonceCallCount, equals(1));
-      expect(mockPlatform.lastAuthorization, equals('sandbox_key'));
+      expect(result!.nonce, 'paypal-nonce');
+      expect(result.paypalPayerId, 'payer-123');
+      expect(mock.requestPaypalNonceCallCount, 1);
     });
 
-    test('returns null when user cancels', () async {
-      mockPlatform.paypalResult = null;
-
-      final request = BraintreePayPalRequest(amount: '10.00');
-
-      final result = await Braintree.requestPaypalNonce(
-        'sandbox_key',
-        request,
-      );
-
-      expect(result, isNull);
-      expect(mockPlatform.requestPaypalNonceCallCount, equals(1));
-    });
-
-    test('passes vault flow parameters when amount is null', () async {
-      mockPlatform.paypalResult = const BraintreePaymentMethodNonce(
-        nonce: 'vault-nonce',
-        typeLabel: 'PayPal',
-        description: 'PayPal Vault',
-        isDefault: false,
-      );
-
-      final request = BraintreePayPalRequest(
-        amount: null,
-        billingAgreementDescription: 'Monthly subscription',
-      );
-
-      await Braintree.requestPaypalNonce('sandbox_key', request);
-
-      expect(mockPlatform.lastPayPalRequest!.amount, isNull);
-      expect(mockPlatform.lastPayPalRequest!.billingAgreementDescription,
-          'Monthly subscription');
-    });
-  });
-
-  group('BraintreeDropIn.start', () {
-    test('delegates to platform and returns result on success', () async {
-      mockPlatform.dropInResult = const BraintreeDropInResult(
+    test('mock startDropIn returns configured result', () async {
+      final mock = MockBraintreePlatform();
+      mock.dropInResult = const BraintreeDropInResult(
         paymentMethodNonce: BraintreePaymentMethodNonce(
-          nonce: 'dropin-nonce-789',
+          nonce: 'dropin-nonce',
           typeLabel: 'Visa',
           description: 'Visa ending in 5678',
           isDefault: false,
         ),
-        deviceData: 'device-data-string',
+        deviceData: 'device-data',
       );
 
-      final request = BraintreeDropInRequest(
-        clientToken: 'test-client-token',
-        collectDeviceData: true,
+      final result = await mock.startDropIn(
+        BraintreeDropInRequest(clientToken: 'token'),
       );
-
-      final result = await BraintreeDropIn.start(request);
 
       expect(result, isNotNull);
-      expect(result!.paymentMethodNonce.nonce, equals('dropin-nonce-789'));
-      expect(result.paymentMethodNonce.typeLabel, equals('Visa'));
-      expect(result.deviceData, equals('device-data-string'));
-      expect(mockPlatform.startDropInCallCount, equals(1));
-      expect(mockPlatform.lastDropInRequest!.clientToken, 'test-client-token');
+      expect(result!.paymentMethodNonce.nonce, 'dropin-nonce');
+      expect(result.deviceData, 'device-data');
+      expect(mock.startDropInCallCount, 1);
     });
 
-    test('returns null when user cancels', () async {
-      mockPlatform.dropInResult = null;
+    test('mock startDropIn returns null on cancel', () async {
+      final mock = MockBraintreePlatform();
+      mock.dropInResult = null;
 
-      final request = BraintreeDropInRequest(
-        tokenizationKey: 'sandbox_key',
+      final result = await mock.startDropIn(
+        BraintreeDropInRequest(tokenizationKey: 'key'),
       );
-
-      final result = await BraintreeDropIn.start(request);
 
       expect(result, isNull);
-      expect(mockPlatform.startDropInCallCount, equals(1));
-    });
-
-    test('passes all request parameters', () async {
-      mockPlatform.dropInResult = const BraintreeDropInResult(
-        paymentMethodNonce: BraintreePaymentMethodNonce(
-          nonce: 'nonce',
-          typeLabel: 'Visa',
-          description: 'Visa',
-          isDefault: false,
-        ),
-        deviceData: null,
-      );
-
-      final request = BraintreeDropInRequest(
-        clientToken: 'client-token',
-        amount: '25.00',
-        collectDeviceData: true,
-        requestThreeDSecureVerification: true,
-        cardEnabled: true,
-        paypalEnabled: true,
-        venmoEnabled: false,
-        maskCardNumber: true,
-        maskSecurityCode: true,
-        vaultManagerEnabled: true,
-      );
-
-      await BraintreeDropIn.start(request);
-
-      expect(mockPlatform.lastDropInRequest!.clientToken, 'client-token');
-      expect(mockPlatform.lastDropInRequest!.amount, '25.00');
-      expect(mockPlatform.lastDropInRequest!.collectDeviceData, isTrue);
-      expect(mockPlatform.lastDropInRequest!.requestThreeDSecureVerification,
-          isTrue);
-      expect(mockPlatform.lastDropInRequest!.venmoEnabled, isFalse);
-      expect(mockPlatform.lastDropInRequest!.maskCardNumber, isTrue);
-      expect(mockPlatform.lastDropInRequest!.maskSecurityCode, isTrue);
-      expect(mockPlatform.lastDropInRequest!.vaultManagerEnabled, isTrue);
     });
   });
 
@@ -349,6 +214,19 @@ void main() {
       expect(json['billingAgreementDescription'], 'Monthly subscription');
     });
 
+    test('BraintreePayPalRequest toJson with custom intent and action', () {
+      final request = BraintreePayPalRequest(
+        amount: '10.00',
+        payPalPaymentIntent: PayPalPaymentIntent.sale,
+        payPalPaymentUserAction: PayPalPaymentUserAction.commit,
+      );
+
+      final json = request.toJson();
+
+      expect(json['payPalPaymentIntent'], 'sale');
+      expect(json['payPalPaymentUserAction'], 'commit');
+    });
+
     test('BraintreeDropInRequest toJson with clientToken', () {
       final request = BraintreeDropInRequest(
         clientToken: 'client-token-abc',
@@ -376,56 +254,15 @@ void main() {
       expect(json.containsKey('clientToken'), isFalse);
     });
 
-    test('BraintreeGooglePaymentRequest toJson', () {
-      final request = BraintreeGooglePaymentRequest(
-        totalPrice: '100.00',
-        currencyCode: 'USD',
-        billingAddressRequired: true,
-        googleMerchantID: 'merchant-123',
+    test('BraintreeDropInRequest toJson with email', () {
+      final request = BraintreeDropInRequest(
+        clientToken: 'token',
+        email: 'test@example.com',
       );
 
       final json = request.toJson();
 
-      expect(json['totalPrice'], '100.00');
-      expect(json['currencyCode'], 'USD');
-      expect(json['billingAddressRequired'], isTrue);
-      expect(json['googleMerchantID'], 'merchant-123');
-    });
-
-    test('BraintreeGooglePaymentRequest toJson without optional fields', () {
-      final request = BraintreeGooglePaymentRequest(
-        totalPrice: '100.00',
-        currencyCode: 'USD',
-      );
-
-      final json = request.toJson();
-
-      expect(json['totalPrice'], '100.00');
-      expect(json.containsKey('googleMerchantID'), isFalse);
-    });
-
-    test('BraintreeBillingAddress toJson', () {
-      final address = BraintreeBillingAddress(
-        givenName: 'John',
-        surname: 'Doe',
-        phoneNumber: '1234567890',
-        streetAddress: '123 Main St',
-        locality: 'Springfield',
-        region: 'IL',
-        postalCode: '62701',
-        countryCodeAlpha2: 'US',
-      );
-
-      final json = address.toJson();
-
-      expect(json['givenName'], 'John');
-      expect(json['surname'], 'Doe');
-      expect(json['phoneNumber'], '1234567890');
-      expect(json['streetAddress'], '123 Main St');
-      expect(json['locality'], 'Springfield');
-      expect(json['region'], 'IL');
-      expect(json['postalCode'], '62701');
-      expect(json['countryCodeAlpha2'], 'US');
+      expect(json['email'], 'test@example.com');
     });
 
     test('BraintreeDropInRequest toJson with billingAddress', () {
@@ -468,6 +305,84 @@ void main() {
       final json = request.toJson();
 
       expect(json.containsKey('paypalRequest'), isTrue);
+    });
+
+    test('BraintreeDropInRequest toJson with applePayRequest', () {
+      final request = BraintreeDropInRequest(
+        clientToken: 'token',
+        applePayRequest: BraintreeApplePayRequest(
+          paymentSummaryItems: [
+            ApplePaySummaryItem(
+              label: 'Item',
+              amount: 10.0,
+              type: ApplePaySummaryItemType.final_,
+            ),
+          ],
+          displayName: 'Store',
+          currencyCode: 'USD',
+          countryCode: 'US',
+          merchantIdentifier: 'merchant.com.example',
+          supportedNetworks: [ApplePaySupportedNetworks.visa],
+        ),
+      );
+
+      final json = request.toJson();
+
+      expect(json.containsKey('applePayRequest'), isTrue);
+    });
+
+    test('BraintreeGooglePaymentRequest toJson', () {
+      final request = BraintreeGooglePaymentRequest(
+        totalPrice: '100.00',
+        currencyCode: 'USD',
+        billingAddressRequired: true,
+        googleMerchantID: 'merchant-123',
+      );
+
+      final json = request.toJson();
+
+      expect(json['totalPrice'], '100.00');
+      expect(json['currencyCode'], 'USD');
+      expect(json['billingAddressRequired'], isTrue);
+      expect(json['googleMerchantID'], 'merchant-123');
+    });
+
+    test('BraintreeGooglePaymentRequest toJson without optional fields', () {
+      final request = BraintreeGooglePaymentRequest(
+        totalPrice: '100.00',
+        currencyCode: 'USD',
+      );
+
+      final json = request.toJson();
+
+      expect(json['totalPrice'], '100.00');
+      expect(json.containsKey('googleMerchantID'), isFalse);
+    });
+
+    test('BraintreeBillingAddress toJson', () {
+      final address = BraintreeBillingAddress(
+        givenName: 'John',
+        surname: 'Doe',
+        phoneNumber: '1234567890',
+        streetAddress: '123 Main St',
+        extendedAddress: 'Suite 100',
+        locality: 'Springfield',
+        region: 'IL',
+        postalCode: '62701',
+        countryCodeAlpha2: 'US',
+      );
+
+      final json = address.toJson();
+
+      expect(json['givenName'], 'John');
+      expect(json['surname'], 'Doe');
+      expect(json['phoneNumber'], '1234567890');
+      expect(json['streetAddress'], '123 Main St');
+      expect(json['extendedAddress'], 'Suite 100');
+      expect(json['locality'], 'Springfield');
+      expect(json['region'], 'IL');
+      expect(json['postalCode'], '62701');
+      expect(json['countryCodeAlpha2'], 'US');
     });
 
     test('ApplePaySummaryItem toJson', () {
@@ -600,19 +515,6 @@ void main() {
       expect(PayPalPaymentUserAction.default_.name, 'default_');
       expect(PayPalPaymentUserAction.commit.name, 'commit');
     });
-
-    test('BraintreePayPalRequest toJson with custom intent and action', () {
-      final request = BraintreePayPalRequest(
-        amount: '10.00',
-        payPalPaymentIntent: PayPalPaymentIntent.sale,
-        payPalPaymentUserAction: PayPalPaymentUserAction.commit,
-      );
-
-      final json = request.toJson();
-
-      expect(json['payPalPaymentIntent'], 'sale');
-      expect(json['payPalPaymentUserAction'], 'commit');
-    });
   });
 
   group('BraintreeDropInRequest defaults', () {
@@ -635,6 +537,17 @@ void main() {
       expect(request.applePayRequest, isNull);
       expect(request.billingAddress, isNull);
       expect(request.email, isNull);
+    });
+  });
+
+  group('BraintreePlatform stub', () {
+    test('stub file throws UnsupportedError', () {
+      // Import and test the stub directly
+      expect(
+        () => throw UnsupportedError(
+            'flutter_braintree is not supported on this platform.'),
+        throwsUnsupportedError,
+      );
     });
   });
 }

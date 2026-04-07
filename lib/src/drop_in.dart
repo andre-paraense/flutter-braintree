@@ -1,13 +1,15 @@
-import 'package:flutter/services.dart';
 import 'dart:async';
+
+import 'platform/braintree_platform_provider.dart';
 
 import 'request.dart';
 import 'result.dart';
 
+/// Provides access to Braintree's Drop-in UI.
+///
+/// The Drop-in UI provides a pre-built payment form that supports credit cards,
+/// PayPal, and other payment methods. Works across Android, iOS, and Web platforms.
 class BraintreeDropIn {
-  static const MethodChannel _kChannel =
-      const MethodChannel('flutter_braintree.drop_in');
-
   const BraintreeDropIn._();
 
   /// Launches the Braintree Drop-in UI.
@@ -19,11 +21,6 @@ class BraintreeDropIn {
   /// all the relevant information, or `null` if the selection was canceled.
   static Future<BraintreeDropInResult?> start(
       BraintreeDropInRequest request) async {
-    var result = await _kChannel.invokeMethod(
-      'start',
-      request.toJson(),
-    );
-    if (result == null) return null;
-    return BraintreeDropInResult.fromJson(result);
+    return BraintreePlatformProvider.instance.startDropIn(request);
   }
 }
