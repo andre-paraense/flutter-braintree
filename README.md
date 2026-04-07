@@ -3,6 +3,25 @@
 A Flutter plugin that wraps the native [Braintree SDKs](https://www.braintreepayments.com/features/seamless-checkout/drop-in-ui).
 Unlike other plugins, this plugin not only lets you start Braintree's native Drop-in UI, but also allows you to create your own custom Flutter UI with Braintree functionality.
 
+**Supports Android, iOS, and Web platforms.**
+
+## What does this repo/piece do in the Stack?
+
+### Businesswise
+
+This plugin enables Flutter applications to accept payments through Braintree, supporting credit cards, PayPal, Google Pay, Apple Pay, and Venmo. By providing a single Flutter interface that works across Android, iOS, and Web, it allows businesses to reach customers on any platform without maintaining separate payment integration code.
+
+### Productwise
+
+The plugin offers two integration paths: a native Drop-in UI for quick integration, and a custom API for building bespoke payment forms. The Drop-in UI provides a pre-built, tested payment experience, while the custom API gives full control over the payment flow. On the web, the plugin uses Braintree's JavaScript SDK to provide equivalent functionality.
+
+### Technicallywise
+
+The plugin uses a platform abstraction pattern with conditional imports to support multiple platforms:
+- **Android/iOS**: MethodChannel-based communication with native Braintree SDKs (Java/Swift)
+- **Web**: JavaScript interop (`dart:js_interop`) with Braintree's Web Drop-in and Client SDKs
+- **Platform Interface**: `BraintreePlatform` abstract class with `BraintreePlatformProvider` singleton for testability
+
 ## Installation
 
 Add flutter_braintree to your `pubspec.yaml` file:
@@ -98,6 +117,39 @@ Moreover, you need to specify the same URL scheme in your `Info.plist`:
 ```
 
 See the official [Braintree documentation](https://developers.braintreepayments.com/guides/paypal/client-side/ios/v4) for a more detailed explanation.
+
+### Web
+
+To use flutter_braintree on the web, you need to include the Braintree JavaScript SDKs in your `web/index.html` file. Add the following `<script>` tags inside the `<head>` section:
+
+```html
+<head>
+  <!-- Other head elements... -->
+
+  <!-- Braintree Web Drop-in SDK -->
+  <script src="https://js.braintreegateway.com/web/dropin/1.43.0/js/dropin.min.js"></script>
+
+  <!-- Braintree Web Client SDK (for custom credit card tokenization) -->
+  <script src="https://js.braintreegateway.com/web/3.101.0/js/client.min.js"></script>
+
+  <!-- Braintree PayPal Checkout SDK (optional, for custom PayPal tokenization) -->
+  <script src="https://js.braintreegateway.com/web/3.101.0/js/paypal-checkout.min.js"></script>
+</head>
+```
+
+**Note:** Only include the SDKs you need:
+- **Drop-in SDK**: Required if you use `BraintreeDropIn.start()` on web
+- **Client SDK**: Required if you use `Braintree.tokenizeCreditCard()` on web
+- **PayPal Checkout SDK**: Required if you use `Braintree.requestPaypalNonce()` on web
+
+#### Web limitations
+
+- **Google Pay** and **Apple Pay** are not available through the web Drop-in UI (these are mobile-native only)
+- **Venmo** is not available on web
+- **3D Secure** is available on web when configured through the Drop-in UI
+- **Device data collection** on web uses the Braintree Data Collector JS SDK if included
+
+See the official [Braintree Web SDK documentation](https://developer.paypal.com/braintree/docs/start/hello-client/javascript/v3) for more details.
 
 ## Usage
 
@@ -228,3 +280,17 @@ var request = BraintreeDropInRequest(
 ```
 
 See `BraintreeDropInRequest` and `BraintreeDropInResult` for more documentation.
+
+### Custom platform implementation (advanced)
+
+For testing or custom platform scenarios, you can override the platform implementation:
+
+```dart
+import 'package:flutter_braintree/flutter_braintree.dart';
+
+// Set a custom platform implementation
+BraintreePlatformProvider.instance = MyCustomBraintreePlatform();
+
+// Reset to the default platform implementation
+BraintreePlatformProvider.reset();
+```

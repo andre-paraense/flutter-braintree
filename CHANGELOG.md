@@ -1,3 +1,19 @@
+## 5.0.0
+
+- **Web platform support**: Extend the plugin to support Flutter Web using Braintree's JavaScript SDKs
+  - Drop-in UI via `braintree-web-drop-in` JS SDK
+  - Credit card tokenization via `braintree-web` Client JS SDK
+  - PayPal Checkout/Vault flow via `braintree-web` PayPal Checkout JS SDK
+- **Platform abstraction**: Introduce `BraintreePlatform` interface and `BraintreePlatformProvider` for clean platform separation and testability
+  - `MethodChannelBraintreePlatform` for Android/iOS (method channels)
+  - `WebBraintreePlatform` for web (JavaScript interop via `dart:js_interop`)
+  - Conditional imports to automatically select the correct implementation
+- **SDK constraint update**: Requires Dart >= 3.4.0 and Flutter >= 3.22.0
+- **New dependencies**: `web: 1.0.0`, `flutter_web_plugins` from Flutter SDK
+- **Comprehensive unit tests**: 33 tests covering models, platform abstraction, and result parsing
+- **Updated documentation**: README now includes web setup instructions and architecture overview
+- **Breaking change**: Minimum SDK version updated from `>=2.15.0` to `>=3.4.0`
+
 ## 4.0.0
 
 - Upgrade Drop-In SDK to 6.13.0
