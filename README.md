@@ -123,10 +123,10 @@ You only need to include the scripts for the features you use:
 
 #### Web limitations
 
-- **Google Pay** and **Apple Pay** are not available through the web Drop-in (they are mobile-only). Use `kIsWeb` to conditionally disable them.
-- **Venmo** is not supported on web.
-- **Vault manager** is not supported in the web Drop-in UI.
-- **Device data collection** is not yet implemented for web.
+- **Google Pay** and **Apple Pay** are not currently supported by this plugin on web. Use `kIsWeb` to conditionally disable them.
+- **Venmo** is not currently supported by this plugin on web.
+- **Vault manager** is not currently supported by this plugin on web.
+- **Device data collection** is not currently implemented by this plugin on web.
 
 #### Architecture
 

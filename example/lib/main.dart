@@ -109,10 +109,12 @@ class _MyAppState extends State<MyApp> {
                     cardEnabled: true,
                   );
                   final result = await BraintreeDropIn.start(request);
+                  if (!mounted) return;
                   if (result != null) {
                     showNonce(result.paymentMethodNonce);
                   }
                 } catch (e) {
+                  if (!mounted) return;
                   showError(e);
                 }
               },
@@ -124,17 +126,19 @@ class _MyAppState extends State<MyApp> {
                   final request = BraintreeCreditCardRequest(
                     cardNumber: '4111111111111111',
                     expirationMonth: '12',
-                    expirationYear: '2021',
+                    expirationYear: (DateTime.now().year + 1).toString(),
                     cvv: '123',
                   );
                   final result = await Braintree.tokenizeCreditCard(
                     tokenizationKey,
                     request,
                   );
+                  if (!mounted) return;
                   if (result != null) {
                     showNonce(result);
                   }
                 } catch (e) {
+                  if (!mounted) return;
                   showError(e);
                 }
               },
@@ -153,10 +157,12 @@ class _MyAppState extends State<MyApp> {
                     tokenizationKey,
                     request,
                   );
+                  if (!mounted) return;
                   if (result != null) {
                     showNonce(result);
                   }
                 } catch (e) {
+                  if (!mounted) return;
                   showError(e);
                 }
               },
@@ -170,10 +176,12 @@ class _MyAppState extends State<MyApp> {
                     tokenizationKey,
                     request,
                   );
+                  if (!mounted) return;
                   if (result != null) {
                     showNonce(result);
                   }
                 } catch (e) {
+                  if (!mounted) return;
                   showError(e);
                 }
               },

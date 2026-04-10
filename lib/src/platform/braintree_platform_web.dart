@@ -155,22 +155,41 @@ bool _jsExists(String path) {
   return current != null;
 }
 
-Future<void> _ensureDropinLoaded() async {
-  if (!_jsExists('braintree.dropin')) {
-    await _loadScript(_dropinSdkUrl);
+final Map<String, Future<void>> _scriptLoadFutures = <String, Future<void>>{};
+
+Future<void> _ensureSdkLoaded(String jsPath, String url) async {
+  if (_jsExists(jsPath)) {
+    return;
   }
+
+  final inFlightLoad = _scriptLoadFutures[url];
+  if (inFlightLoad != null) {
+    await inFlightLoad;
+    return;
+  }
+
+  final loadFuture = _loadScript(url);
+  _scriptLoadFutures[url] = loadFuture;
+
+  try {
+    await loadFuture;
+  } finally {
+    if (identical(_scriptLoadFutures[url], loadFuture)) {
+      _scriptLoadFutures.remove(url);
+    }
+  }
+}
+
+Future<void> _ensureDropinLoaded() async {
+  await _ensureSdkLoaded('braintree.dropin', _dropinSdkUrl);
 }
 
 Future<void> _ensureClientLoaded() async {
-  if (!_jsExists('braintree.client')) {
-    await _loadScript(_clientSdkUrl);
-  }
+  await _ensureSdkLoaded('braintree.client', _clientSdkUrl);
 }
 
 Future<void> _ensurePayPalCheckoutLoaded() async {
-  if (!_jsExists('braintree.paypalCheckout')) {
-    await _loadScript(_paypalCheckoutSdkUrl);
-  }
+  await _ensureSdkLoaded('braintree.paypalCheckout', _paypalCheckoutSdkUrl);
 }
 
 // ---------------------------------------------------------------------------
