@@ -32,6 +32,24 @@ void main() {
       expect(json['vaultManagerEnabled'], false);
     });
 
+    test('toJson serializes paypalEnabled independently from cardEnabled', () {
+      final paypalOnlyRequest = BraintreeDropInRequest(
+        cardEnabled: false,
+        paypalEnabled: true,
+      );
+      final paypalOnlyJson = paypalOnlyRequest.toJson();
+      expect(paypalOnlyJson['cardEnabled'], false);
+      expect(paypalOnlyJson['paypalEnabled'], true);
+
+      final cardOnlyRequest = BraintreeDropInRequest(
+        cardEnabled: true,
+        paypalEnabled: false,
+      );
+      final cardOnlyJson = cardOnlyRequest.toJson();
+      expect(cardOnlyJson['cardEnabled'], true);
+      expect(cardOnlyJson['paypalEnabled'], false);
+    });
+
     test('toJson includes optional fields when set', () {
       final request = BraintreeDropInRequest(
         clientToken: 'token',

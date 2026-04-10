@@ -1,5 +1,5 @@
 @JS()
-library;
+library flutter_braintree_platform_web;
 
 import 'dart:async';
 import 'dart:js_interop';
@@ -313,6 +313,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
     options['container'] = '#$containerId';
 
     _DropinInstance? instance;
+    var isSubmitting = false;
 
     void cleanup() {
       final currentInstance = instance;
@@ -351,6 +352,8 @@ class BraintreePlatformWeb extends BraintreePlatform {
     submitBtn.addEventListener(
       'click',
       (() {
+        if (isSubmitting) return;
+        isSubmitting = true;
         _handleDropInSubmit(instance!, completer, cleanup);
       }).toJS,
     );
@@ -443,6 +446,13 @@ class BraintreePlatformWeb extends BraintreePlatform {
     // Build the overlay with a PayPal button container
     final completer = Completer<BraintreePaymentMethodNonce?>();
 
+    if (_document.getElementById('braintree-paypal-overlay') != null) {
+      throw StateError(
+        'Braintree PayPal flow is already open: overlay element '
+        '"braintree-paypal-overlay" already exists.',
+      );
+    }
+
     final overlay = _document.createElement('div');
     overlay.id = 'braintree-paypal-overlay';
     overlay.style
@@ -477,8 +487,10 @@ class BraintreePlatformWeb extends BraintreePlatform {
       ..fontSize = '20px'
       ..color = '#333333';
 
+    final paypalContainerId =
+        'braintree-paypal-button-container-${DateTime.now().microsecondsSinceEpoch}';
     final paypalContainer = _document.createElement('div');
-    paypalContainer.id = 'braintree-paypal-button-container';
+    paypalContainer.id = paypalContainerId;
 
     final cancelBtn = _document.createElement('button');
     cancelBtn.textContent = 'Cancel';
@@ -555,7 +567,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
 
       // Create and render PayPal buttons using direct JS interop
       final buttons = _paypalButtons(buttonsConfig.jsify() as JSObject);
-      await buttons.render('#braintree-paypal-button-container').toDart;
+      await buttons.render('#$paypalContainerId').toDart;
     } catch (e) {
       overlay.remove();
       if (!completer.isCompleted) {
