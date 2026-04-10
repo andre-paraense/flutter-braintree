@@ -316,6 +316,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
     var isSubmitting = false;
 
     void cleanup() {
+      isSubmitting = false;
       final currentInstance = instance;
       instance = null;
 
