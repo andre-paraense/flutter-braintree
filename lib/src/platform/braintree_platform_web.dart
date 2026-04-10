@@ -306,7 +306,17 @@ class BraintreePlatformWeb extends BraintreePlatform {
     _DropinInstance? instance;
 
     void cleanup() {
-      instance?.teardown();
+      final currentInstance = instance;
+      instance = null;
+
+      if (currentInstance != null) {
+        unawaited(
+          currentInstance.teardown().toDart.catchError((Object _) {
+            // Ignore teardown failures during cleanup.
+            return null;
+          }),
+        );
+      }
       overlay.remove();
     }
 
@@ -576,8 +586,11 @@ class BraintreePlatformWeb extends BraintreePlatform {
           deviceData: null,
         ));
       }
-    } catch (e) {
-      // Don't close on error — user can try again or cancel
+    } catch (e, st) {
+      cleanup();
+      if (!completer.isCompleted) {
+        completer.completeError(e, st);
+      }
     }
   }
 

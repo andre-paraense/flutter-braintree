@@ -36,6 +36,7 @@ void main() {
       expect(json['requestThreeDSecureVerification'], false);
       expect(json['venmoEnabled'], true);
       expect(json['cardEnabled'], true);
+      expect(json['paypalEnabled'], true);
       expect(json['maskCardNumber'], false);
       expect(json['maskSecurityCode'], false);
       expect(json['vaultManagerEnabled'], false);
