@@ -331,40 +331,8 @@ class BraintreePlatformWeb extends BraintreePlatform {
     // Handle submit
     submitBtn.addEventListener(
       'click',
-      (() async {
-        try {
-          final payload = await instance!.requestPaymentMethod().toDart;
-          final nonce = (payload['nonce'] as JSString?)?.toDart ?? '';
-          final typeLabel = (payload['type'] as JSString?)?.toDart ?? '';
-          final description =
-              (payload['description'] as JSString?)?.toDart ?? '';
-
-          // Try to extract details
-          String? paypalPayerId;
-          final details = payload['details'];
-          if (details != null && details is JSObject) {
-            final payerIdJs = details['payerId'];
-            if (payerIdJs != null && payerIdJs is JSString) {
-              paypalPayerId = payerIdJs.toDart;
-            }
-          }
-
-          cleanup();
-          if (!completer.isCompleted) {
-            completer.complete(BraintreeDropInResult(
-              paymentMethodNonce: BraintreePaymentMethodNonce(
-                nonce: nonce,
-                typeLabel: typeLabel,
-                description: description,
-                isDefault: false,
-                paypalPayerId: paypalPayerId,
-              ),
-              deviceData: null,
-            ));
-          }
-        } catch (e) {
-          // Don't close on error — user can try again or cancel
-        }
+      (() {
+        _handleDropInSubmit(instance!, completer, cleanup);
       }).toJS,
     );
 
@@ -542,37 +510,8 @@ class BraintreePlatformWeb extends BraintreePlatform {
         }).toJS;
       }
 
-      buttonsConfig['onApprove'] = ((JSObject data) async {
-        try {
-          final payload = await paypalInstance.tokenizePayment(data).toDart;
-          final nonce = (payload['nonce'] as JSString?)?.toDart ?? '';
-          final typeLabel = 'PayPal';
-
-          String? payerId;
-          final details = payload['details'];
-          if (details != null && details is JSObject) {
-            final payerIdJs = details['payerId'];
-            if (payerIdJs != null && payerIdJs is JSString) {
-              payerId = payerIdJs.toDart;
-            }
-          }
-
-          overlay.remove();
-          if (!completer.isCompleted) {
-            completer.complete(BraintreePaymentMethodNonce(
-              nonce: nonce,
-              typeLabel: typeLabel,
-              description: 'PayPal',
-              isDefault: false,
-              paypalPayerId: payerId,
-            ));
-          }
-        } catch (e) {
-          overlay.remove();
-          if (!completer.isCompleted) {
-            completer.completeError(e);
-          }
-        }
+      buttonsConfig['onApprove'] = ((JSObject data) {
+        _handlePayPalApprove(data, paypalInstance, overlay, completer);
       }).toJS;
 
       buttonsConfig['onCancel'] = (() {
@@ -600,6 +539,85 @@ class BraintreePlatformWeb extends BraintreePlatform {
     }
 
     return completer.future;
+  }
+
+  /// Async handler for Drop-in submit, extracted so the JS callback stays sync.
+  Future<void> _handleDropInSubmit(
+    _DropinInstance instance,
+    Completer<BraintreeDropInResult?> completer,
+    void Function() cleanup,
+  ) async {
+    try {
+      final payload = await instance.requestPaymentMethod().toDart;
+      final nonce = (payload['nonce'] as JSString?)?.toDart ?? '';
+      final typeLabel = (payload['type'] as JSString?)?.toDart ?? '';
+      final description =
+          (payload['description'] as JSString?)?.toDart ?? '';
+
+      String? paypalPayerId;
+      final details = payload['details'];
+      if (details != null && details is JSObject) {
+        final payerIdJs = details['payerId'];
+        if (payerIdJs != null && payerIdJs is JSString) {
+          paypalPayerId = payerIdJs.toDart;
+        }
+      }
+
+      cleanup();
+      if (!completer.isCompleted) {
+        completer.complete(BraintreeDropInResult(
+          paymentMethodNonce: BraintreePaymentMethodNonce(
+            nonce: nonce,
+            typeLabel: typeLabel,
+            description: description,
+            isDefault: false,
+            paypalPayerId: paypalPayerId,
+          ),
+          deviceData: null,
+        ));
+      }
+    } catch (e) {
+      // Don't close on error — user can try again or cancel
+    }
+  }
+
+  /// Async handler for PayPal onApprove, extracted so the JS callback stays sync.
+  Future<void> _handlePayPalApprove(
+    JSObject data,
+    _PayPalCheckoutInstance paypalInstance,
+    _Element overlay,
+    Completer<BraintreePaymentMethodNonce?> completer,
+  ) async {
+    try {
+      final payload = await paypalInstance.tokenizePayment(data).toDart;
+      final nonce = (payload['nonce'] as JSString?)?.toDart ?? '';
+      final typeLabel = 'PayPal';
+
+      String? payerId;
+      final details = payload['details'];
+      if (details != null && details is JSObject) {
+        final payerIdJs = details['payerId'];
+        if (payerIdJs != null && payerIdJs is JSString) {
+          payerId = payerIdJs.toDart;
+        }
+      }
+
+      overlay.remove();
+      if (!completer.isCompleted) {
+        completer.complete(BraintreePaymentMethodNonce(
+          nonce: nonce,
+          typeLabel: typeLabel,
+          description: 'PayPal',
+          isDefault: false,
+          paypalPayerId: payerId,
+        ));
+      }
+    } catch (e) {
+      overlay.remove();
+      if (!completer.isCompleted) {
+        completer.completeError(e);
+      }
+    }
   }
 }
 

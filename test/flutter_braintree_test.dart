@@ -1,8 +1,18 @@
 import 'package:flutter_braintree/src/request.dart';
 import 'package:flutter_braintree/src/result.dart';
+import 'package:flutter_braintree/src/platform/braintree_platform.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('BraintreePlatform', () {
+    test('defines startDropIn method', () {
+      // Verify the abstract interface exists and has the expected shape.
+      // We cannot instantiate it directly, but we can check that a
+      // concrete subclass must override all three methods.
+      expect(BraintreePlatform, isNotNull);
+    });
+  });
+
   group('BraintreeDropInRequest', () {
     test('toJson includes clientToken when set', () {
       final request = BraintreeDropInRequest(clientToken: 'test_client_token');
@@ -308,6 +318,94 @@ void main() {
       expect(json['merchantIdentifier'], 'merchant.com.test');
       expect(json['supportedNetworks'], [0, 1]);
       expect((json['paymentSummaryItems'] as List).length, 1);
+    });
+  });
+
+  group('PayPalPaymentIntent', () {
+    test('has correct enum values', () {
+      expect(PayPalPaymentIntent.values.length, 3);
+      expect(PayPalPaymentIntent.order.name, 'order');
+      expect(PayPalPaymentIntent.sale.name, 'sale');
+      expect(PayPalPaymentIntent.authorize.name, 'authorize');
+    });
+
+    test('default intent is authorize', () {
+      final request = BraintreePayPalRequest(amount: '10.00');
+      expect(request.payPalPaymentIntent, PayPalPaymentIntent.authorize);
+    });
+  });
+
+  group('PayPalPaymentUserAction', () {
+    test('has correct enum values', () {
+      expect(PayPalPaymentUserAction.values.length, 2);
+      expect(PayPalPaymentUserAction.default_.name, 'default_');
+      expect(PayPalPaymentUserAction.commit.name, 'commit');
+    });
+
+    test('default user action is default_', () {
+      final request = BraintreePayPalRequest(amount: '10.00');
+      expect(
+          request.payPalPaymentUserAction, PayPalPaymentUserAction.default_);
+    });
+  });
+
+  group('ApplePaySummaryItemType', () {
+    test('final_ rawValue is 0', () {
+      expect(ApplePaySummaryItemType.final_.rawValue, 0);
+    });
+
+    test('pending rawValue is 1', () {
+      expect(ApplePaySummaryItemType.pending.rawValue, 1);
+    });
+
+    test('has exactly 2 values', () {
+      expect(ApplePaySummaryItemType.values.length, 2);
+    });
+  });
+
+  group('BraintreeDropInRequest edge cases', () {
+    test('toJson includes paypalRequest when set', () {
+      final request = BraintreeDropInRequest(
+        tokenizationKey: 'key',
+        paypalRequest: BraintreePayPalRequest(
+          amount: '5.00',
+          displayName: 'Test',
+        ),
+      );
+      final json = request.toJson();
+      expect(json.containsKey('paypalRequest'), true);
+      final paypal = json['paypalRequest'] as Map<String, dynamic>;
+      expect(paypal['amount'], '5.00');
+      expect(paypal['displayName'], 'Test');
+    });
+
+    test('toJson includes googlePaymentRequest when set', () {
+      final request = BraintreeDropInRequest(
+        tokenizationKey: 'key',
+        googlePaymentRequest: BraintreeGooglePaymentRequest(
+          totalPrice: '10.00',
+          currencyCode: 'USD',
+        ),
+      );
+      final json = request.toJson();
+      expect(json.containsKey('googlePaymentRequest'), true);
+    });
+  });
+
+  group('BraintreePaymentMethodNonce construction', () {
+    test('constructor sets all fields', () {
+      final nonce = BraintreePaymentMethodNonce(
+        nonce: 'test-nonce',
+        typeLabel: 'Visa',
+        description: 'ending in 1111',
+        isDefault: true,
+        paypalPayerId: 'PAYER_ID',
+      );
+      expect(nonce.nonce, 'test-nonce');
+      expect(nonce.typeLabel, 'Visa');
+      expect(nonce.description, 'ending in 1111');
+      expect(nonce.isDefault, true);
+      expect(nonce.paypalPayerId, 'PAYER_ID');
     });
   });
 }

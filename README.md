@@ -99,6 +99,37 @@ Moreover, you need to specify the same URL scheme in your `Info.plist`:
 
 See the official [Braintree documentation](https://developers.braintreepayments.com/guides/paypal/client-side/ios/v4) for a more detailed explanation.
 
+### Web
+
+Add the Braintree JavaScript SDK script tags to your `web/index.html`, inside the `<head>` section:
+
+```html
+<!-- Braintree Drop-in SDK (for the Drop-in UI) -->
+<script src="https://js.braintreegateway.com/web/dropin/1.43.0/js/dropin.min.js"></script>
+
+<!-- Braintree Client SDK (for custom credit card tokenization) -->
+<script src="https://js.braintreegateway.com/web/3.101.0/js/client.min.js"></script>
+
+<!-- Braintree PayPal Checkout SDK (for PayPal flows) -->
+<script src="https://js.braintreegateway.com/web/3.101.0/js/paypal-checkout.min.js"></script>
+```
+
+You only need to include the scripts for the features you use:
+- **Drop-in UI** (`BraintreeDropIn.start`): requires the Drop-in SDK script
+- **Credit card tokenization** (`Braintree.tokenizeCreditCard`): requires the Client SDK script
+- **PayPal flows** (`Braintree.requestPaypalNonce`): requires both the Client SDK and PayPal Checkout SDK scripts
+
+#### Web limitations
+
+- **Google Pay** and **Apple Pay** are not available through the web Drop-in (they are mobile-only). Use `kIsWeb` to conditionally disable them.
+- **Venmo** is not supported on web.
+- **Vault manager** is not supported in the web Drop-in UI.
+- **Device data collection** is not yet implemented for web.
+
+#### Architecture
+
+On web, the plugin uses `dart:js_interop` to communicate directly with the Braintree JavaScript SDKs. Platform selection is automatic via conditional imports — no additional setup is needed beyond the script tags above.
+
 ## Usage
 
 You must first create a [Braintree account](https://www.braintreepayments.com/). In your control panel you can create a tokenization key. You likely also want to set up a backend server. Make sure to read the [Braintree developer documentation](https://developers.braintreepayments.com/) so you understand all key concepts.
