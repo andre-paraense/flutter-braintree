@@ -114,7 +114,7 @@ For best performance, add the Braintree JavaScript SDK script tags to your `web/
 <script src="https://js.braintreegateway.com/web/3.101.0/js/paypal-checkout.min.js"></script>
 ```
 
-> **Note:** These script tags are **recommended but optional**. If omitted, the plugin will dynamically inject the required scripts at runtime when a payment method is first used. Pre-loading them in `index.html` avoids a network round-trip on first use and is required if your site enforces a strict Content Security Policy (CSP) that blocks inline script injection.
+> **Note:** These script tags are **recommended but optional**. If omitted, the plugin will dynamically inject the required external SDK scripts at runtime when a payment method is first used. Pre-loading them in `index.html` avoids a network round-trip on first use and is required if your site enforces a strict Content Security Policy (CSP) that disallows dynamically inserted scripts or otherwise requires script sources to be explicitly permitted.
 
 You only need to include the scripts for the features you use:
 - **Drop-in UI** (`BraintreeDropIn.start`): requires the Drop-in SDK script

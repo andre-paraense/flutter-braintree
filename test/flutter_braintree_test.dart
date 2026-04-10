@@ -1,18 +1,8 @@
 import 'package:flutter_braintree/src/request.dart';
 import 'package:flutter_braintree/src/result.dart';
-import 'package:flutter_braintree/src/platform/braintree_platform.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('BraintreePlatform', () {
-    test('defines startDropIn method', () {
-      // Verify the abstract interface exists and has the expected shape.
-      // We cannot instantiate it directly, but we can check that a
-      // concrete subclass must override all three methods.
-      expect(BraintreePlatform, isNotNull);
-    });
-  });
-
   group('BraintreeDropInRequest', () {
     test('toJson includes clientToken when set', () {
       final request = BraintreeDropInRequest(clientToken: 'test_client_token');

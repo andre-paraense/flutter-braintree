@@ -222,6 +222,13 @@ class BraintreePlatformWeb extends BraintreePlatform {
     final completer = Completer<BraintreeDropInResult?>();
 
     // --- Build the overlay DOM ---
+    if (_document.getElementById('braintree-dropin-overlay') != null) {
+      throw StateError(
+        'Braintree drop-in is already open: overlay element '
+        '"braintree-dropin-overlay" already exists.',
+      );
+    }
+
     final overlay = _document.createElement('div');
     overlay.id = 'braintree-dropin-overlay';
     overlay.style
@@ -258,8 +265,10 @@ class BraintreePlatformWeb extends BraintreePlatform {
       ..fontSize = '20px'
       ..color = '#333333';
 
+    final containerId =
+        'braintree-dropin-container-${DateTime.now().microsecondsSinceEpoch}';
     final container = _document.createElement('div');
-    container.id = 'braintree-dropin-container';
+    container.id = containerId;
 
     final buttonRow = _document.createElement('div');
     buttonRow.style
@@ -301,7 +310,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
     _document.body!.appendChild(overlay);
 
     // Set the container element for the Drop-in to render into
-    options['container'] = '#braintree-dropin-container';
+    options['container'] = '#$containerId';
 
     _DropinInstance? instance;
 
@@ -381,10 +390,16 @@ class BraintreePlatformWeb extends BraintreePlatform {
 
     // The response contains creditCards array
     final creditCards = response['creditCards'];
-    if (creditCards == null) return null;
+    if (creditCards == null || creditCards is! JSArray) return null;
+    if (creditCards.length == 0) return null;
 
-    final firstCard = (creditCards as JSArray)[0] as JSObject;
-    final nonce = (firstCard['nonce'] as JSString?)?.toDart ?? '';
+    final firstCardValue = creditCards[0];
+    if (firstCardValue is! JSObject) return null;
+
+    final firstCard = firstCardValue;
+    final nonce = (firstCard['nonce'] as JSString?)?.toDart;
+    if (nonce == null || nonce.isEmpty) return null;
+
     final typeLabel =
         (firstCard['type'] as JSString?)?.toDart ?? 'CreditCard';
     final description =
