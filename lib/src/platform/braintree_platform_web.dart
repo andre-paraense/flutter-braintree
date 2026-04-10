@@ -634,6 +634,12 @@ class BraintreePlatformWeb extends BraintreePlatform {
     try {
       final payload = await instance.requestPaymentMethod().toDart;
       final nonce = (payload['nonce'] as JSString?)?.toDart ?? '';
+      if (nonce.isEmpty) {
+        throw Exception(
+          'Braintree Drop-in returned a payment method without a nonce. '
+          'The payment cannot be processed.',
+        );
+      }
       final typeLabel = (payload['type'] as JSString?)?.toDart ?? '';
       final description =
           (payload['description'] as JSString?)?.toDart ?? '';
@@ -678,6 +684,12 @@ class BraintreePlatformWeb extends BraintreePlatform {
     try {
       final payload = await paypalInstance.tokenizePayment(data).toDart;
       final nonce = (payload['nonce'] as JSString?)?.toDart ?? '';
+      if (nonce.isEmpty) {
+        throw Exception(
+          'PayPal tokenization returned a payload without a nonce. '
+          'The payment cannot be processed.',
+        );
+      }
       final typeLabel = 'PayPal';
 
       String? payerId;
