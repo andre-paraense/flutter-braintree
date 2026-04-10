@@ -32,6 +32,8 @@ extension type _Element._(JSObject _) implements JSObject {
   external void appendChild(_Element child);
   external void remove();
   external void addEventListener(String type, JSFunction callback);
+  external void setAttribute(String name, String value);
+  external void removeAttribute(String name);
   external set src(String value);
   external set type(String value);
   @JS('onload')
@@ -71,6 +73,7 @@ extension type _CSSStyleDeclaration._(JSObject _) implements JSObject {
   external set fontFamily(String value);
   external set boxShadow(String value);
   external set maxHeight(String value);
+  external set opacity(String value);
 }
 
 // ---------------------------------------------------------------------------
@@ -177,6 +180,14 @@ Future<void> _ensureSdkLoaded(String jsPath, String url) async {
     if (identical(_scriptLoadFutures[url], loadFuture)) {
       _scriptLoadFutures.remove(url);
     }
+  }
+
+  if (!_jsExists(jsPath)) {
+    throw Exception(
+      'Braintree SDK script loaded from $url but expected global '
+      '"$jsPath" was not found. The script may have failed to initialize, '
+      'been blocked by CSP, or the URL may be incorrect.',
+    );
   }
 }
 
@@ -350,14 +361,8 @@ class BraintreePlatformWeb extends BraintreePlatform {
       overlay.remove();
     }
 
-    try {
-      instance = await _dropinCreate(_jsObject(options)).toDart;
-    } catch (e) {
-      cleanup();
-      throw Exception('Failed to create Braintree Drop-in: $e');
-    }
-
-    // Handle cancel
+    // Register cancel handler immediately so the user can dismiss while
+    // the Drop-in SDK is still initializing (slow network / CSP delays).
     cancelBtn.addEventListener(
       'click',
       (() {
@@ -368,15 +373,33 @@ class BraintreePlatformWeb extends BraintreePlatform {
       }).toJS,
     );
 
-    // Handle submit
+    // Disable submit until the Drop-in instance is ready
+    submitBtn.setAttribute('disabled', 'true');
+    submitBtn.style.opacity = '0.5';
+    submitBtn.style.cursor = 'not-allowed';
+
+    // Handle submit (guarded by instance readiness and double-click flag)
     submitBtn.addEventListener(
       'click',
       (() {
-        if (isSubmitting) return;
+        // instance is null while _dropinCreate is still initializing
+        if (instance == null || isSubmitting) return;
         isSubmitting = true;
         _handleDropInSubmit(instance!, completer, cleanup);
       }).toJS,
     );
+
+    try {
+      instance = await _dropinCreate(_jsObject(options)).toDart;
+    } catch (e) {
+      cleanup();
+      throw Exception('Failed to create Braintree Drop-in: $e');
+    }
+
+    // Enable the submit button now that the instance is ready
+    submitBtn.removeAttribute('disabled');
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
 
     return completer.future;
   }
@@ -454,11 +477,14 @@ class BraintreePlatformWeb extends BraintreePlatform {
     final isVault = request.amount == null;
 
     // Load the PayPal SDK
+    final isCommit =
+        request.payPalPaymentUserAction == PayPalPaymentUserAction.commit;
     await paypalInstance
         .loadPayPalSDK(
           _jsObject({
             if (isVault) 'vault': true,
             if (!isVault) 'intent': request.payPalPaymentIntent.name,
+            if (isCommit) 'commit': true,
           }),
         )
         .toDart;
@@ -550,6 +576,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
         'flow': isVault ? 'vault' : 'checkout',
         if (!isVault) 'amount': request.amount,
         if (request.currencyCode != null) 'currency': request.currencyCode,
+        if (request.displayName != null) 'displayName': request.displayName,
         if (isVault && request.billingAgreementDescription != null)
           'billingAgreementDescription': request.billingAgreementDescription,
         if (!isVault) 'intent': request.payPalPaymentIntent.name,
