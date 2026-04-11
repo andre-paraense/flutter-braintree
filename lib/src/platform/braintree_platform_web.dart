@@ -445,9 +445,19 @@ class BraintreePlatformWeb extends BraintreePlatform {
       }
 
       instance = createdInstance;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      // The user may have canceled while _dropinCreate was still awaiting.
+      // If cancellation already won, preserve the null result instead of
+      // throwing a late initialization error.
+      if (completer.isCompleted ||
+          _document.getElementById('braintree-dropin-overlay') == null) {
+        return completer.future;
+      }
       cleanup();
-      throw Exception('Failed to create Braintree Drop-in: $e');
+      Error.throwWithStackTrace(
+        Exception('Failed to create Braintree Drop-in: $e'),
+        stackTrace,
+      );
     }
 
     // Enable the submit button now that the instance is ready

@@ -6,7 +6,7 @@ import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 /// `src/platform/braintree_platform_provider.dart`. This class serves as the
 /// standard Flutter web plugin entry point.
 class FlutterBraintreeWebPlugin {
-  static void registerWith(Registrar registrar) {
+  static void registerWith(Registrar _) {
     // No-op: the web platform implementation is selected via conditional
     // imports in braintree_platform_provider.dart.
   }
