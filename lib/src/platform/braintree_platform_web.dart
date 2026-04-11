@@ -147,7 +147,9 @@ Future<void> _loadScript(String url) {
     completer.complete();
   }).toJS;
   script.onerror = ((JSAny error) {
-    completer.completeError('Failed to load script: $url');
+    completer.completeError(
+      StateError('Failed to load script: $url. Error: $error'),
+    );
   }).toJS;
   _document.head!.appendChild(script);
   return completer.future;
@@ -175,6 +177,13 @@ Future<void> _ensureSdkLoaded(String jsPath, String url) async {
   final inFlightLoad = _scriptLoadFutures[url];
   if (inFlightLoad != null) {
     await inFlightLoad;
+    if (!_jsExists(jsPath)) {
+      throw Exception(
+        'Braintree SDK script loaded from $url but expected global '
+        '"$jsPath" was not found. The script may have failed to initialize, '
+        'been blocked by CSP, or the URL may be incorrect.',
+      );
+    }
     return;
   }
 
@@ -681,7 +690,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
       buttonsConfig['onError'] = ((JSAny err) {
         removeOverlay();
         if (!completer.isCompleted) {
-          completer.completeError('PayPal error: $err');
+          completer.completeError(Exception('PayPal error: $err'));
         }
       }).toJS;
 
@@ -691,7 +700,9 @@ class BraintreePlatformWeb extends BraintreePlatform {
     } catch (e) {
       removeOverlay();
       if (!completer.isCompleted) {
-        completer.completeError('Failed to render PayPal buttons: $e');
+        completer.completeError(
+          Exception('Failed to render PayPal buttons: $e'),
+        );
       }
     }
 
