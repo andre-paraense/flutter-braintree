@@ -22,6 +22,7 @@ extension type _Document._(JSObject _) implements JSObject {
   external _Element? get body;
   external _Element? get head;
   external void addEventListener(String type, JSFunction callback);
+  external void removeEventListener(String type, JSFunction callback);
 }
 
 extension type _Element._(JSObject _) implements JSObject {
@@ -355,6 +356,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
 
     _DropinInstance? instance;
     var isSubmitting = false;
+    JSFunction? escapeListener;
 
     void cleanup() {
       isSubmitting = false;
@@ -370,6 +372,10 @@ class BraintreePlatformWeb extends BraintreePlatform {
         );
       }
       overlay.remove();
+      if (escapeListener != null) {
+        _document.removeEventListener('keydown', escapeListener!);
+        escapeListener = null;
+      }
     }
 
     // Register cancel handler immediately so the user can dismiss while
@@ -384,16 +390,14 @@ class BraintreePlatformWeb extends BraintreePlatform {
     cancelBtn.addEventListener('click', cancelAndComplete.toJS);
 
     // Allow Escape key to close the overlay
-    _document.addEventListener(
-      'keydown',
-      ((JSObject event) {
-        final key = (event as _KeyboardEvent).key;
-        if (key == 'Escape' &&
-            _document.getElementById('braintree-dropin-overlay') != null) {
-          cancelAndComplete();
-        }
-      }).toJS,
-    );
+    escapeListener = ((JSObject event) {
+      final key = (event as _KeyboardEvent).key;
+      if (key == 'Escape' &&
+          _document.getElementById('braintree-dropin-overlay') != null) {
+        cancelAndComplete();
+      }
+    }).toJS;
+    _document.addEventListener('keydown', escapeListener!);
 
     // Disable submit until the Drop-in instance is ready
     submitBtn.setAttribute('disabled', 'true');
@@ -595,8 +599,18 @@ class BraintreePlatformWeb extends BraintreePlatform {
       ..cursor = 'pointer'
       ..textAlign = 'center';
 
-    void cancelPayPal() {
+    JSFunction? paypalEscapeListener;
+
+    void removeOverlay() {
       overlay.remove();
+      if (paypalEscapeListener != null) {
+        _document.removeEventListener('keydown', paypalEscapeListener!);
+        paypalEscapeListener = null;
+      }
+    }
+
+    void cancelPayPal() {
+      removeOverlay();
       if (!completer.isCompleted) {
         completer.complete(null);
       }
@@ -605,16 +619,14 @@ class BraintreePlatformWeb extends BraintreePlatform {
     cancelBtn.addEventListener('click', cancelPayPal.toJS);
 
     // Allow Escape key to close the overlay
-    _document.addEventListener(
-      'keydown',
-      ((JSObject event) {
-        final key = (event as _KeyboardEvent).key;
-        if (key == 'Escape' &&
-            _document.getElementById('braintree-paypal-overlay') != null) {
-          cancelPayPal();
-        }
-      }).toJS,
-    );
+    paypalEscapeListener = ((JSObject event) {
+      final key = (event as _KeyboardEvent).key;
+      if (key == 'Escape' &&
+          _document.getElementById('braintree-paypal-overlay') != null) {
+        cancelPayPal();
+      }
+    }).toJS;
+    _document.addEventListener('keydown', paypalEscapeListener!);
 
     dialog.appendChild(titleEl);
     dialog.appendChild(paypalContainer);
@@ -650,18 +662,19 @@ class BraintreePlatformWeb extends BraintreePlatform {
       }
 
       buttonsConfig['onApprove'] = ((JSObject data) {
-        _handlePayPalApprove(data, paypalInstance, overlay, completer);
+        _handlePayPalApprove(
+            data, paypalInstance, removeOverlay, completer);
       }).toJS;
 
       buttonsConfig['onCancel'] = (() {
-        overlay.remove();
+        removeOverlay();
         if (!completer.isCompleted) {
           completer.complete(null);
         }
       }).toJS;
 
       buttonsConfig['onError'] = ((JSAny err) {
-        overlay.remove();
+        removeOverlay();
         if (!completer.isCompleted) {
           completer.completeError('PayPal error: $err');
         }
@@ -671,7 +684,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
       final buttons = _paypalButtons(buttonsConfig.jsify() as JSObject);
       await buttons.render('#$paypalContainerId').toDart;
     } catch (e) {
-      overlay.remove();
+      removeOverlay();
       if (!completer.isCompleted) {
         completer.completeError('Failed to render PayPal buttons: $e');
       }
@@ -733,7 +746,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
   Future<void> _handlePayPalApprove(
     JSObject data,
     _PayPalCheckoutInstance paypalInstance,
-    _Element overlay,
+    void Function() removeOverlay,
     Completer<BraintreePaymentMethodNonce?> completer,
   ) async {
     try {
@@ -756,7 +769,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
         }
       }
 
-      overlay.remove();
+      removeOverlay();
       if (!completer.isCompleted) {
         completer.complete(BraintreePaymentMethodNonce(
           nonce: nonce,
@@ -767,7 +780,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
         ));
       }
     } catch (e) {
-      overlay.remove();
+      removeOverlay();
       if (!completer.isCompleted) {
         completer.completeError(e);
       }
