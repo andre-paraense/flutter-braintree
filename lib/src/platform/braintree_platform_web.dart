@@ -805,10 +805,10 @@ class BraintreePlatformWeb extends BraintreePlatform {
           paypalPayerId: payerId,
         ));
       }
-    } catch (e) {
+    } catch (e, st) {
       removeOverlay();
       if (!completer.isCompleted) {
-        completer.completeError(e);
+        completer.completeError(e, st);
       }
     }
   }
