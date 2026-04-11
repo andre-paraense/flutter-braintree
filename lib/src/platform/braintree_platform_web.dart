@@ -264,6 +264,17 @@ class BraintreePlatformWeb extends BraintreePlatform {
       options['card'] = false;
     }
 
+    // Locale
+    if (request.locale != null) {
+      options['locale'] = request.locale;
+    }
+
+    // Custom translations
+    if (request.webTranslations != null &&
+        request.webTranslations!.isNotEmpty) {
+      options['translations'] = request.webTranslations;
+    }
+
     // The completer that resolves when the user submits or cancels
     final completer = Completer<BraintreeDropInResult?>();
 
@@ -307,7 +318,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
       ..boxShadow = '0 4px 24px rgba(0,0,0,0.2)';
 
     final title = _document.createElement('h2');
-    title.textContent = 'Payment';
+    title.textContent = request.webDialogTitle ?? 'Payment';
     title.style
       ..margin = '0 0 16px 0'
       ..textAlign = 'center'
@@ -327,7 +338,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
       ..margin = '16px 0 0 0';
 
     final submitBtn = _document.createElement('button');
-    submitBtn.textContent = 'Submit Payment';
+    submitBtn.textContent = request.webSubmitButtonLabel ?? 'Submit Payment';
     submitBtn.style
       ..padding = '10px 24px'
       ..fontSize = '16px'
@@ -339,7 +350,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
       ..cursor = 'pointer';
 
     final cancelBtn = _document.createElement('button');
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = request.webCancelButtonLabel ?? 'Cancel';
     cancelBtn.style
       ..padding = '10px 24px'
       ..fontSize = '16px'

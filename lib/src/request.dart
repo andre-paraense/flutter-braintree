@@ -16,6 +16,11 @@ class BraintreeDropInRequest {
     this.maskCardNumber = false,
     this.maskSecurityCode = false,
     this.vaultManagerEnabled = false,
+    this.locale,
+    this.webTranslations,
+    this.webDialogTitle,
+    this.webSubmitButtonLabel,
+    this.webCancelButtonLabel,
   });
 
   /// Authorization allowing this client to communicate with Braintree.
@@ -70,6 +75,24 @@ class BraintreeDropInRequest {
   /// The ApplePay option will not be visible in the drop-in UI if the setup in
   /// Xcode, App Store Connect or Braintree control panel was done incorrectly.
   BraintreeApplePayRequest? applePayRequest;
+
+  /// Locale for the Drop-In UI (e.g., 'pt_BR', 'es_ES').
+  /// On web, this is passed to the Braintree Drop-In JS SDK's `locale` option.
+  String? locale;
+
+  /// Custom translations for the web Drop-In UI.
+  /// Keys correspond to Braintree Drop-In JS SDK translation keys.
+  /// See: https://braintree.github.io/braintree-web-drop-in/docs/current/module-braintree-web-drop-in.html
+  Map<String, String>? webTranslations;
+
+  /// Custom title for the web payment dialog overlay. Defaults to 'Payment'.
+  String? webDialogTitle;
+
+  /// Custom label for the web submit payment button. Defaults to 'Submit Payment'.
+  String? webSubmitButtonLabel;
+
+  /// Custom label for the web cancel button. Defaults to 'Cancel'.
+  String? webCancelButtonLabel;
 
   /// Converts this request object into a JSON-encodable format.
   Map<String, dynamic> toJson() => {
