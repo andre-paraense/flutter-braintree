@@ -390,7 +390,22 @@ class BraintreePlatformWeb extends BraintreePlatform {
     );
 
     try {
-      instance = await _dropinCreate(_jsObject(options)).toDart;
+      final createdInstance =
+          await _dropinCreate(_jsObject(options)).toDart;
+
+      // The user may have canceled while the Drop-in was still initializing.
+      // In that case, tear down the late-created instance immediately and exit
+      // without re-enabling the submit button.
+      if (completer.isCompleted || overlay.parentNode == null) {
+        try {
+          await createdInstance.teardown().toDart;
+        } catch (_) {
+          // Ignore teardown errors during cancellation cleanup.
+        }
+        return completer.future;
+      }
+
+      instance = createdInstance;
     } catch (e) {
       cleanup();
       throw Exception('Failed to create Braintree Drop-in: $e');
