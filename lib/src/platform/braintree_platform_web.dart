@@ -36,6 +36,7 @@ extension type _Element._(JSObject _) implements JSObject {
   external void addEventListener(String type, JSFunction callback);
   external void setAttribute(String name, String value);
   external void removeAttribute(String name);
+  external void focus();
   external set src(String value);
   external set type(String value);
   @JS('onload')
@@ -348,8 +349,10 @@ class BraintreePlatformWeb extends BraintreePlatform {
     overlay.appendChild(dialog);
     _document.body!.appendChild(overlay);
 
-    // Focus the cancel button so keyboard users can interact immediately
+    // Focus the cancel button so keyboard users can interact immediately.
+    // `autofocus` alone is not reliable for dynamically inserted elements.
     cancelBtn.setAttribute('autofocus', 'true');
+    cancelBtn.focus();
 
     // Set the container element for the Drop-in to render into
     options['container'] = '#$containerId';
@@ -634,8 +637,10 @@ class BraintreePlatformWeb extends BraintreePlatform {
     overlay.appendChild(dialog);
     _document.body!.appendChild(overlay);
 
-    // Focus the cancel button so keyboard users can interact immediately
+    // Focus the cancel button so keyboard users can interact immediately.
+    // `autofocus` alone is not reliable for dynamically inserted elements.
     cancelBtn.setAttribute('autofocus', 'true');
+    cancelBtn.focus();
 
     // Render PayPal buttons via the global `paypal` object
     try {
