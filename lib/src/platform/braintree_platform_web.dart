@@ -290,7 +290,8 @@ class BraintreePlatformWeb extends BraintreePlatform {
     overlay.id = 'braintree-dropin-overlay';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', 'Payment');
+    final dialogTitle = request.webDialogTitle ?? 'Payment';
+    overlay.setAttribute('aria-label', dialogTitle);
     overlay.style
       ..position = 'fixed'
       ..top = '0'
@@ -318,7 +319,7 @@ class BraintreePlatformWeb extends BraintreePlatform {
       ..boxShadow = '0 4px 24px rgba(0,0,0,0.2)';
 
     final title = _document.createElement('h2');
-    title.textContent = request.webDialogTitle ?? 'Payment';
+    title.textContent = dialogTitle;
     title.style
       ..margin = '0 0 16px 0'
       ..textAlign = 'center'
