@@ -1,0 +1,11 @@
+{
+    "name": "flutter_braintree_example",
+    "short_name": "braintree_example",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2196F3",
+    "description": "Demonstrates the flutter_braintree plugin on web.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false
+}
