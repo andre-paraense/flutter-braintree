@@ -1,5 +1,4 @@
-import 'package:flutter_braintree/src/request.dart';
-import 'package:flutter_braintree/src/result.dart';
+import 'package:flutter_braintree/flutter_braintree.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

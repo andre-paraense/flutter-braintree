@@ -21,6 +21,7 @@ extension type _Document._(JSObject _) implements JSObject {
   external _Element? getElementById(String elementId);
   external _Element? get body;
   external _Element? get head;
+  external void addEventListener(String type, JSFunction callback);
 }
 
 extension type _Element._(JSObject _) implements JSObject {
@@ -74,6 +75,10 @@ extension type _CSSStyleDeclaration._(JSObject _) implements JSObject {
   external set boxShadow(String value);
   external set maxHeight(String value);
   external set opacity(String value);
+}
+
+extension type _KeyboardEvent._(JSObject _) implements JSObject {
+  external String get key;
 }
 
 // ---------------------------------------------------------------------------
@@ -261,6 +266,9 @@ class BraintreePlatformWeb extends BraintreePlatform {
 
     final overlay = _document.createElement('div');
     overlay.id = 'braintree-dropin-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Payment');
     overlay.style
       ..position = 'fixed'
       ..top = '0'
@@ -339,6 +347,9 @@ class BraintreePlatformWeb extends BraintreePlatform {
     overlay.appendChild(dialog);
     _document.body!.appendChild(overlay);
 
+    // Focus the cancel button so keyboard users can interact immediately
+    cancelBtn.setAttribute('autofocus', 'true');
+
     // Set the container element for the Drop-in to render into
     options['container'] = '#$containerId';
 
@@ -363,12 +374,23 @@ class BraintreePlatformWeb extends BraintreePlatform {
 
     // Register cancel handler immediately so the user can dismiss while
     // the Drop-in SDK is still initializing (slow network / CSP delays).
-    cancelBtn.addEventListener(
-      'click',
-      (() {
-        cleanup();
-        if (!completer.isCompleted) {
-          completer.complete(null);
+    void cancelAndComplete() {
+      cleanup();
+      if (!completer.isCompleted) {
+        completer.complete(null);
+      }
+    }
+
+    cancelBtn.addEventListener('click', cancelAndComplete.toJS);
+
+    // Allow Escape key to close the overlay
+    _document.addEventListener(
+      'keydown',
+      ((JSObject event) {
+        final key = (event as _KeyboardEvent).key;
+        if (key == 'Escape' &&
+            _document.getElementById('braintree-dropin-overlay') != null) {
+          cancelAndComplete();
         }
       }).toJS,
     );
@@ -396,7 +418,8 @@ class BraintreePlatformWeb extends BraintreePlatform {
       // The user may have canceled while the Drop-in was still initializing.
       // In that case, tear down the late-created instance immediately and exit
       // without re-enabling the submit button.
-      if (completer.isCompleted || overlay.parentNode == null) {
+      if (completer.isCompleted ||
+          _document.getElementById('braintree-dropin-overlay') == null) {
         try {
           await createdInstance.teardown().toDart;
         } catch (_) {
@@ -516,6 +539,9 @@ class BraintreePlatformWeb extends BraintreePlatform {
 
     final overlay = _document.createElement('div');
     overlay.id = 'braintree-paypal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'PayPal');
     overlay.style
       ..position = 'fixed'
       ..top = '0'
@@ -569,12 +595,23 @@ class BraintreePlatformWeb extends BraintreePlatform {
       ..cursor = 'pointer'
       ..textAlign = 'center';
 
-    cancelBtn.addEventListener(
-      'click',
-      (() {
-        overlay.remove();
-        if (!completer.isCompleted) {
-          completer.complete(null);
+    void cancelPayPal() {
+      overlay.remove();
+      if (!completer.isCompleted) {
+        completer.complete(null);
+      }
+    }
+
+    cancelBtn.addEventListener('click', cancelPayPal.toJS);
+
+    // Allow Escape key to close the overlay
+    _document.addEventListener(
+      'keydown',
+      ((JSObject event) {
+        final key = (event as _KeyboardEvent).key;
+        if (key == 'Escape' &&
+            _document.getElementById('braintree-paypal-overlay') != null) {
+          cancelPayPal();
         }
       }).toJS,
     );
@@ -584,6 +621,9 @@ class BraintreePlatformWeb extends BraintreePlatform {
     dialog.appendChild(cancelBtn);
     overlay.appendChild(dialog);
     _document.body!.appendChild(overlay);
+
+    // Focus the cancel button so keyboard users can interact immediately
+    cancelBtn.setAttribute('autofocus', 'true');
 
     // Render PayPal buttons via the global `paypal` object
     try {
